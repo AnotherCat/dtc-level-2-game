@@ -1,0 +1,23 @@
+[project]
+name = "Level 2 Dtc Game"
+version = ""
+description = "A simple platformer for NCEA level 2, written using python-arcade"
+authors = [
+    {name = "Sam", email = "skee@stu.kerikerihigh.ac.nz"},
+]
+dependencies = [
+    "arcade~=2.5",
+]
+requires-python = "==3.9"
+dynamic = ["classifiers"]
+license = {text = "MIT"}
+
+[project.urls]
+homepage = "https://github.com/AnotherCat/dtc-level-2-game"
+
+[build-system]
+requires = ["pdm-pep517"]
+build-backend = "pdm.pep517.api"
+
+[tool]
+[tool.pdm]
