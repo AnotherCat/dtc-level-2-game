@@ -21,3 +21,9 @@ build-backend = "pdm.pep517.api"
 
 [tool]
 [tool.pdm]
+[tool.pdm.dev-dependencies]
+black = [
+    "flake8~=3.9",
+    "mypy~=0.902",
+    "isort~=5.8",
+]

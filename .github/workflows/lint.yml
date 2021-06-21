@@ -1,0 +1,21 @@
+name: Lint
+
+on: [push]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: pdm-project/setup-pdm@v2
+      name: Setup PDM
+      with:
+        python-version: 3.8 
+        enable-pep582: true 
+    - name: Install dependencies
+      run: pdm sync
+    - name: Run linters
+      run: |
+        pdm run isort --recursive --diff .
+        pdm run black --check .
+        pdm run flake8
+        pdm run mypy
