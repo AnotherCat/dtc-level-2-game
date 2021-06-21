@@ -6,12 +6,13 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
     - uses: pdm-project/setup-pdm@v2
       name: Setup PDM
       with:
         python-version: 3.8 
         enable-pep582: true 
+      
+    - uses: actions/checkout@v2
     - name: Install dependencies
       run: pdm sync
     - name: Run linters
