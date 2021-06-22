@@ -15,6 +15,8 @@ license = {text = "MIT"}
 [project.urls]
 homepage = "https://github.com/AnotherCat/dtc-level-2-game"
 
+
+[project.optional-dependencies]
 [build-system]
 requires = ["pdm-pep517"]
 build-backend = "pdm.pep517.api"
@@ -22,8 +24,11 @@ build-backend = "pdm.pep517.api"
 [tool]
 [tool.pdm]
 [tool.pdm.dev-dependencies]
-black = [
+linters = [
     "flake8~=3.9",
+    "black~=21.6b0",
+    "isort~=5.9",
+]
+type-checking = [
     "mypy~=0.902",
-    "isort~=5.8",
 ]
