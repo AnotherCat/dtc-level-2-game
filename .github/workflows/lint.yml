@@ -9,7 +9,7 @@ jobs:
     - uses: pdm-project/setup-pdm@v2
       name: Setup PDM
       with:
-        python-version: 3.8 
+        python-version: 3.9
         version: 1.6.3
         enable-pep582: true 
       
