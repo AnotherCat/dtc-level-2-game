@@ -12,6 +12,8 @@ jobs:
         python-version: 3.8 
         version: 1.6.3
         enable-pep582: true 
+      
+    - uses: actions/checkout@v2
     - name: Install dependencies
       run: pdm sync
     - name: Run linters
