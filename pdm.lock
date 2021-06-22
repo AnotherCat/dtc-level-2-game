@@ -142,7 +142,7 @@ summary = "Backported and Experimental Type Hints for Python 3.5+"
 
 [metadata]
 lock_version = "3"
-content_hash = "sha256:210141fdc2944fa99cfced5807eb6ba39f19a1ce365361ae0a5087cc38c7dd05"
+content_hash = "sha256:2f49925f0e4bae56a6af22a1375c4901d27673aa3d15e4607c5be1ad45817bb7"
 
 [metadata.files]
 "arcade 2.5.7" = [
