@@ -1,5 +1,7 @@
-import arcade, os
 import logging
+import os
+
+import arcade
 
 WIDTH = 1200
 HEIGHT = 700
@@ -13,6 +15,7 @@ file_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(file_path)
 logging.basicConfig(level=logging.DEBUG)
 
+
 class Game(arcade.Window):
     def __init__(self) -> None:
         super().__init__(WIDTH, HEIGHT, TITLE)
@@ -24,9 +27,7 @@ class Game(arcade.Window):
         self.physics_engine: arcade.PhysicsEnginePlatformer
 
     def setup(self) -> None:
-        self.player = arcade.Sprite(
-            "./assets/characters/placeholder_character.png"
-        )
+        self.player = arcade.Sprite("./assets/characters/placeholder_character.png")
         self.player.center_x = 64
         self.player.center_y = 124
         self.load_map(f"./assets/maps/level_{self.level}.tmx")
@@ -36,11 +37,9 @@ class Game(arcade.Window):
         self.view_bottom = 0
         self.view_left = 0
 
-
     def load_map(self, resource: str) -> None:
         layer_name = "ground"
         my_map = arcade.tilemap.read_tmx(resource)
-
 
         self.wall_list = arcade.tilemap.process_layer(
             map_object=my_map, layer_name=layer_name, use_spatial_hash=True, scaling=0.5
@@ -61,9 +60,14 @@ class Game(arcade.Window):
             self.player.change_x = -PLAYER_MOVEMENT_SPEED
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.player.change_x = PLAYER_MOVEMENT_SPEED
-        
+
     def on_key_release(self, key, modifiers):
-        if key == arcade.key.LEFT or key == arcade.key.A or key == arcade.key.RIGHT or key == arcade.key.D:
+        if (
+            key == arcade.key.LEFT
+            or key == arcade.key.A
+            or key == arcade.key.RIGHT
+            or key == arcade.key.D
+        ):
             self.player.change_x = 0
 
     def on_update(self, delta_time):
