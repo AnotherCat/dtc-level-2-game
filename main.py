@@ -5,11 +5,11 @@ import arcade
 
 WIDTH = 1200
 HEIGHT = 700
-LEFT_VIEWPORT_MARGIN = 1
+VIEWPORT_MARGIN = 100
 PLAYER_MOVEMENT_SPEED = 10
-PLAYER_JUMP_SPEED = 5
+PLAYER_JUMP_SPEED = 12
 TITLE = "Ice Game"
-GRAVITY = 1
+GRAVITY = 0.5
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(file_path)
@@ -73,9 +73,41 @@ class Game(arcade.Window):
     def on_update(self, delta_time):
         self.physics_engine.update()
         changed = False
-        left_boundary = self.view_left + LEFT_VIEWPORT_MARGIN
-        if self.player.left < left_boundary:
-            self.view_left
+
+        max_left_distance = self.view_left + VIEWPORT_MARGIN
+        if self.player.left < max_left_distance:
+            self.view_left -= max_left_distance - self.player.left
+            if not self.view_left < 100:
+                changed = True
+
+        max_left_distance = self.view_left + WIDTH - VIEWPORT_MARGIN
+        if self.player.right > max_left_distance:
+            self.view_left += self.player.right - max_left_distance
+            changed = True
+        
+        max_bottom_distance = self.view_bottom + VIEWPORT_MARGIN
+        if self.player.bottom < max_bottom_distance:
+            self.view_bottom -= max_bottom_distance - self.player.bottom
+            changed = True
+        
+        max_top_distance = self.view_bottom + HEIGHT - VIEWPORT_MARGIN
+        if self.player.top > max_top_distance:
+            self.view_bottom += self.player.top - max_top_distance
+            changed = True
+
+        # Ensure that the viewport will map exactly onto pixels on the sprites
+
+        self.view_left = int(self.view_left)
+        self.view_bottom = int(self.view_bottom)
+
+        # If we changed the boundary values, update the view port to match
+        if changed:
+            arcade.set_viewport(
+                self.view_left,
+                WIDTH + self.view_left,
+                self.view_bottom,
+                HEIGHT + self.view_bottom,
+            )
 
 
 if __name__ == "__main__":
