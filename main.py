@@ -5,7 +5,7 @@ import arcade
 
 WIDTH = 1200
 HEIGHT = 700
-VIEWPORT_MARGIN = 100
+VIEWPORT_MARGIN = 140
 PLAYER_MOVEMENT_SPEED = 10
 PLAYER_JUMP_SPEED = 12
 TITLE = "Ice Game"
@@ -70,15 +70,26 @@ class Game(arcade.Window):
         ):
             self.player.change_x = 0
 
+    def death(self):
+        self.setup()
+
+
+
+
     def on_update(self, delta_time):
         self.physics_engine.update()
+        if self.player.center_y < self.player.height - 300:
+           self.death()
         changed = False
+
+        if self.player.center_x <= self.player.width / 2:
+            self.player.center_x = self.player.width / 2 
+            self.player.change_x = 0
 
         max_left_distance = self.view_left + VIEWPORT_MARGIN
         if self.player.left < max_left_distance:
             self.view_left -= max_left_distance - self.player.left
-            if not self.view_left < 100:
-                changed = True
+            changed = True
 
         max_left_distance = self.view_left + WIDTH - VIEWPORT_MARGIN
         if self.player.right > max_left_distance:
@@ -94,6 +105,11 @@ class Game(arcade.Window):
         if self.player.top > max_top_distance:
             self.view_bottom += self.player.top - max_top_distance
             changed = True
+        
+        if self.view_left <= 0:
+            self.view_left = 0
+        if self.view_bottom <= 0:
+            self.view_bottom = 0
 
         # Ensure that the viewport will map exactly onto pixels on the sprites
 
