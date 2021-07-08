@@ -53,7 +53,7 @@ class Game(arcade.Window):
 
     def setup(self) -> None:
         self.player = arcade.Sprite(
-            "./assets/characters/placeholder_character_1.png",
+            "./assets/characters/placeholder_character.png",
             hit_box_algorithm="Detailed",
         )
         self.player.center_x = 64
