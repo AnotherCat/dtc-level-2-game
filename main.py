@@ -29,7 +29,7 @@ TILE_WIDTH = 124
 TILE_HEIGHT = TILE_WIDTH
 WIDTH = 10 * TILE_WIDTH
 HEIGHT = 6 * TILE_HEIGHT
-VIEWPORT_MARGIN = 140
+VIEWPORT_MARGIN = 280
 TITLE = "Ice Game"
 
 file_path = os.path.dirname(os.path.abspath(__file__))
