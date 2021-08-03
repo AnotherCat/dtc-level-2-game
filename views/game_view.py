@@ -91,7 +91,7 @@ class GameView(View):
         my_map = read_tmx(resource)
 
         self.wall_list = process_layer(
-            map_object=my_map, layer_name=tile_name, use_spatial_hash=True, scaling=0.5
+            map_object=my_map, layer_name=tile_name, use_spatial_hash=True, scaling=0.5, hit_box_algorithm="Detailed", hit_box_detail=1
         )
         spring_boards = process_layer(
             map_object=my_map,
