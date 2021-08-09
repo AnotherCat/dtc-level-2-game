@@ -9,6 +9,9 @@ from arcade import (
     set_viewport,
     start_render,
 )
+
+from sprites.player import Player
+
 from arcade.key import LEFT, RIGHT, UP, A, D, W
 from arcade.tilemap import process_layer, read_tmx
 
@@ -42,7 +45,7 @@ class GameView(View):
         self.view_bottom: int
         self.view_left: int
         self.wall_list: SpriteList
-        self.player: Sprite
+        self.player: Player
         self.spring_board_positions: List[Tuple[int, int]] = []
         self.physics_engine: PymunkPhysicsEngine
 
@@ -53,9 +56,11 @@ class GameView(View):
         self.window: "GameWindow"
 
     def setup(self) -> None:
-        self.player = Sprite(
-            "./assets/characters/placeholder_character.png",
-            hit_box_algorithm="Detailed",
+        self.player = Player(
+            frames=3,
+            image_path="./assets/characters/main_character/main_character",
+            dead_zone=0.5,
+            distance_before_change_texture=20,
         )
         self.player.center_x = 64
         self.player.center_y = 400
@@ -91,7 +96,12 @@ class GameView(View):
         my_map = read_tmx(resource)
 
         self.wall_list = process_layer(
-            map_object=my_map, layer_name=tile_name, use_spatial_hash=True, scaling=0.5, hit_box_algorithm="Detailed", hit_box_detail=1
+            map_object=my_map,
+            layer_name=tile_name,
+            use_spatial_hash=True,
+            scaling=0.5,
+            hit_box_algorithm="Detailed",
+            hit_box_detail=1,
         )
         spring_boards = process_layer(
             map_object=my_map,

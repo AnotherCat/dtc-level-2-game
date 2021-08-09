@@ -21,6 +21,5 @@ class GameWindow(Window):
 
 if __name__ == "__main__":
     window = GameWindow(WIDTH, HEIGHT, TITLE)
-    start_view = InstructionView()
-    window.show_view(start_view)
+    window.show_view(window.instruction_view)
     run()
