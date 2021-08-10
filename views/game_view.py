@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, List, Tuple, NamedTuple
 
 from arcade import (
     PymunkPhysicsEngine,
@@ -14,6 +14,8 @@ from sprites.player import Player
 
 from arcade.key import LEFT, RIGHT, UP, A, D, W
 from arcade.tilemap import process_layer, read_tmx
+
+from errors import IncorrectNumberOfMarkers
 
 from static_values import (
     BOOSTED_PLAYER_JUMP_IMPULSE,
@@ -38,6 +40,11 @@ if TYPE_CHECKING:
     from main import GameWindow
 
 
+class CoordinateTuple(NamedTuple):
+    x: int
+    y: int
+
+
 class GameView(View):
     def __init__(self) -> None:
         super().__init__()
@@ -45,8 +52,12 @@ class GameView(View):
         self.view_bottom: int
         self.view_left: int
         self.wall_list: SpriteList
+        self.battery_list: SpriteList
         self.player: Player
-        self.spring_board_positions: List[Tuple[int, int]] = []
+        self.spring_board_positions: List[CoordinateTuple] = []
+
+        # The bottom x and y position that the player should start at
+        self.player_start_position: CoordinateTuple
         self.physics_engine: PymunkPhysicsEngine
 
         self.left_pressed = False
@@ -56,17 +67,30 @@ class GameView(View):
         self.window: "GameWindow"
 
     def setup(self) -> None:
+        self.load_map(f"./assets/maps/level_{self.level}.tmx")
         self.player = Player(
             frames=3,
             image_path="./assets/characters/main_character/main_character",
             dead_zone=0.5,
             distance_before_change_texture=20,
         )
-        self.player.center_x = 64
-        self.player.center_y = 400
-        self.load_map(f"./assets/maps/level_{self.level}.tmx")
-        self.view_bottom = 0
-        self.view_left = 0
+
+        # Add set the x,y positions of the player so that the bottom position of the player is inline with the stored position
+        self.player.center_x = self.player_start_position.x + (self.player.height / 2)
+        self.player.center_y = self.player_start_position.y + (self.player.width / 2)
+
+        # Set the viewport to the player's position, if it is further away than the viewport margin
+        self.view_bottom = (
+            self.player.bottom + VIEWPORT_MARGIN
+            if self.player.bottom > VIEWPORT_MARGIN
+            else 0
+        )
+        self.view_left = (
+            self.player.left + VIEWPORT_MARGIN
+            if self.player.left > VIEWPORT_MARGIN
+            else 0
+        )
+
         gravity = (0, -GRAVITY)
 
         damping = DEFAULT_DAMPING
@@ -91,50 +115,99 @@ class GameView(View):
         )
 
     def load_map(self, resource: str) -> None:
-        tile_name = "ground"
-        spring_layer = "spring_boards"
-        my_map = read_tmx(resource)
+        """
+        Load the maps from tmx files. Different layers are used for different types of objects.
+        """
+
+        # This layer holds the 'walls', the tiles that are used to 'walk' on, that the player can't pass through
+        tile_layer_name = "wall_contact"
+
+        # This layer holds the springboards. The tiles are processed and then appended to the wall list
+        spring_layer_name = "springboards"
+
+        # This layer holds the batteries, which are a collectable
+        battery_layer_name = "batteries"
+
+        # This layer holds a single tile, which is a wall tile. This tile marks where the character should 'start'
+        # The single tile is processed and then appended to the wall list
+        start_marker_layer_name = "start_level_marker"
+
+        # Read the tmx file
+        map = read_tmx(resource)
+
+        # Process layers, returning a sprite list
+        spring_boards = process_layer(
+            map_object=map,
+            layer_name=spring_layer_name,
+            use_spatial_hash=True,
+            scaling=0.5,
+        )
+        start_marker_list = process_layer(
+            map_object=map,
+            layer_name=start_marker_layer_name,
+            use_spatial_hash=True,
+            scaling=0.5,
+        )
 
         self.wall_list = process_layer(
-            map_object=my_map,
-            layer_name=tile_name,
-            use_spatial_hash=True,
-            scaling=0.5,
-            hit_box_algorithm="Detailed",
-            hit_box_detail=1,
-        )
-        spring_boards = process_layer(
-            map_object=my_map,
-            layer_name=spring_layer,
+            map_object=map,
+            layer_name=tile_layer_name,
             use_spatial_hash=True,
             scaling=0.5,
         )
+
+        self.battery_list = process_layer(
+            map_object=map,
+            layer_name=battery_layer_name,
+            use_spatial_hash=True,
+            scaling=0.5,
+        )
+
+        # Process the marker and store it's coordinate
+        marker_list_len = len(start_marker_list)
+        if marker_list_len > 1 or marker_list_len < 1:
+            raise IncorrectNumberOfMarkers(
+                "There are too many markers in this level!"
+                f"Expected markers: 1, Markers: {len(start_marker_list)}"
+            )
+        # Since the length was checked above, there should be only one item.
+        marker_sprite = start_marker_list[0]
+        # The player should start on the top of the tile, this stores the bottom x and bottom y of the start position.
+        self.player_start_position = CoordinateTuple(
+            x=marker_sprite.center_x + TILE_HEIGHT / 2,
+            # 100 is added to the y value because the pymunk physics engine takes a while to kick in
+            y=100 + marker_sprite.center_y - TILE_WIDTH / 2,
+        )
+        # Add the sprite to the wall list
+        self.wall_list.append(marker_sprite)
+
         for spring_board in spring_boards:
             self.wall_list.append(spring_board)
             self.spring_board_positions.append(
-                (
-                    spring_board.center_x - (spring_board.width / 2),
-                    spring_board.center_y + (spring_board.height / 2),
+                CoordinateTuple(
+                    x=spring_board.center_x - (spring_board.width / 2),
+                    y=spring_board.center_y + (spring_board.height / 2),
                 )
             )
 
-        if my_map.background_color:
-            set_background_color(my_map.background_color)
+        if map.background_color:
+            set_background_color(map.background_color)
 
     def on_draw(self) -> None:
         start_render()
         self.wall_list.draw()
+        self.battery_list.draw()
         self.player.draw()
 
     def calculate_jump_impulse(self) -> int:
         for pos in self.spring_board_positions:
             colliding_x = (
-                pos[0] < self.player.center_x
-                and pos[0] + TILE_WIDTH > self.player.center_x
+                pos.x < self.player.center_x
+                and pos.x + TILE_WIDTH > self.player.center_x
             )
             colliding_y = (
-                pos[1] < self.player.center_y
-                and pos[1] + TILE_HEIGHT > self.player.center_y
+                pos.y < self.player.center_y
+                and pos.y + TILE_HEIGHT > self.player.center_y
             )
             if colliding_x and colliding_y:
                 return BOOSTED_PLAYER_JUMP_IMPULSE
@@ -182,11 +255,11 @@ class GameView(View):
 
         if self.player.center_y < self.player.height - 300:
             self.death()
+            return
         changed = False
 
         if self.player.center_x <= self.player.width / 2:
-            self.player.center_x = self.player.width / 2
-            self.player.change_x = 0
+            self.death()
 
         max_left_distance = self.view_left + VIEWPORT_MARGIN
         if self.player.left < max_left_distance:

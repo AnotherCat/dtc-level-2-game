@@ -3,9 +3,11 @@ from arcade import Sprite, Texture
 from typing import List, NamedTuple
 from enum import IntEnum
 
+
 class FacingDirection(IntEnum):
     RIGHT = 0
     LEFT = 1
+
 
 class TexturePair(NamedTuple):
     right: Texture
@@ -16,7 +18,7 @@ def load_texture_pair(image_path: str) -> TexturePair:
     """Returns an instance of TexturePair with the textures set"""
     right_facing = arcade.load_texture(image_path)
     left_facing = arcade.load_texture(image_path, flipped_horizontally=True)
-    return TexturePair(right = right_facing, left = left_facing)
+    return TexturePair(right=right_facing, left=left_facing)
 
 
 class Player(Sprite):
@@ -29,7 +31,14 @@ class Player(Sprite):
     "dead_zone" the amount of distance to ignore movement, so that animations are not updating constantly
     "distance_before_change_texture" the distance moved to update the animation after
     """
-    def __init__(self, frames: int, image_path: str, dead_zone: float, distance_before_change_texture: int) -> None:
+
+    def __init__(
+        self,
+        frames: int,
+        image_path: str,
+        dead_zone: float,
+        distance_before_change_texture: int,
+    ) -> None:
         """Setup the player"""
         super().__init__(hit_box_algorithm="Detailed")
 
@@ -70,7 +79,7 @@ class Player(Sprite):
             return texture_pair.left
 
     def pymunk_moved(self, physics_engine, dx, dy, d_angle):
-        """ Handle being moved by the pymunk engine """
+        """Handle being moved by the pymunk engine"""
         # Figure out if we need to face left or right
         if dx < -self.dead_zone and self.facing == FacingDirection.RIGHT:
             self.facing = FacingDirection.LEFT
@@ -108,7 +117,6 @@ class Player(Sprite):
             self.current_texture += 1
             if self.current_texture > (self.frames - 1):
                 self.current_texture = 0
-            self.texture = self.get_texture_from_pair(self.moving_textures[self.current_texture])
-
-
-
+            self.texture = self.get_texture_from_pair(
+                self.moving_textures[self.current_texture]
+            )
