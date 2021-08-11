@@ -92,18 +92,13 @@ class Player(Sprite):
 
         # Add to the odometer how far we've moved
         self.x_odometer += dx
-        """
-        # Animation while jumping
+
+        # Animation while jumping, this is set to the 'idle' texture
         # Check if the player is touching the ground
-        is_on_ground = physics_engine.is_on_ground(self)
-        if not is_on_ground:
-            if dy > self.dead_zone:
-                self.texture = self.get_texture_from_pair(self.jump_texture_pair)
-                return
-            elif dy < -self.dead_zone:
-                self.texture = self.get_texture_from_pair(self.fall_texture_pair)
-                return
-        """
+
+        if not physics_engine.is_on_ground(self):
+            self.texture = self.get_texture_from_pair(self.idle_texture_pair)
+            return
 
         # Animation while idle
         if abs(dx) <= self.dead_zone:
