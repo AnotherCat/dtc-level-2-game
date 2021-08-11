@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, List, Tuple, NamedTuple
 
+import arcade
 from arcade import (
     PymunkPhysicsEngine,
     Sprite,
@@ -53,6 +54,7 @@ class GameView(View):
         self.view_left: int
         self.wall_list: SpriteList
         self.battery_list: SpriteList
+        self.death_list: SpriteList
         self.player: Player
         self.spring_board_positions: List[CoordinateTuple] = []
 
@@ -132,6 +134,9 @@ class GameView(View):
         # The single tile is processed and then appended to the wall list
         start_marker_layer_name = "start_level_marker"
 
+        # This layer contains tiles that if touched kill the player
+        death_layer_name = "death"
+
         # Read the tmx file
         map = read_tmx(resource)
 
@@ -161,6 +166,13 @@ class GameView(View):
             layer_name=battery_layer_name,
             use_spatial_hash=True,
             scaling=0.5,
+        )
+
+        self.death_list = process_layer(
+            map_object=map,
+            layer_name= death_layer_name,
+            use_spatial_hash= True,
+            scaling =0.5
         )
 
         # Process the marker and store it's coordinate
@@ -197,6 +209,7 @@ class GameView(View):
         start_render()
         self.wall_list.draw()
         self.battery_list.draw()
+        self.death_list.draw()
         self.player.draw()
 
     def calculate_jump_impulse(self) -> int:
@@ -233,7 +246,13 @@ class GameView(View):
     def death(self) -> None:
         self.window.show_view(self.window.game_over_view)
 
+    def check_for_collision_with_death(self) -> bool:
+        return arcade.check_for_collision_with_list(self.player, self.death_list)
+
     def on_update(self, delta_time: float) -> None:
+        if self.check_for_collision_with_death():
+            self.death()
+
         on_ground = self.physics_engine.is_on_ground(self.player)
         if self.left_pressed and not self.right_pressed:
             if on_ground:
