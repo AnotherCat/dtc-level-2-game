@@ -1,19 +1,10 @@
 from typing import TYPE_CHECKING
 
-from arcade import (
-    View,
-    draw_text,
-    set_background_color,
-    set_viewport,
-    start_render,
-)
+from arcade import View, draw_text, set_background_color, set_viewport, start_render
 from arcade.color import WHITE
 from arcade.csscolor import DARK_SLATE_BLUE
 
-from static_values import (
-    HEIGHT,
-    WIDTH,
-)
+from static_values import HEIGHT, WIDTH
 
 if TYPE_CHECKING:
     from main import GameWindow

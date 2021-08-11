@@ -1,17 +1,9 @@
 from typing import TYPE_CHECKING
 
-from arcade import (
-    View,
-    draw_text,
-    set_viewport,
-    start_render,
-)
+from arcade import View, draw_text, set_viewport, start_render
 from arcade.color import WHITE
 
-from static_values import (
-    HEIGHT,
-    WIDTH,
-)
+from static_values import HEIGHT, WIDTH
 
 if TYPE_CHECKING:
     from main import GameWindow
@@ -41,7 +33,7 @@ class GameOverView(View):
         draw_text(
             "Click to restart",
             WIDTH / 2,
-            HEIGHT / 2 - 75,
+            HEIGHT - 75,
             WHITE,
             font_size=20,
             anchor_x="center",

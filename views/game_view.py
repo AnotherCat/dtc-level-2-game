@@ -1,23 +1,19 @@
-from typing import TYPE_CHECKING, List, Tuple, NamedTuple
+from typing import TYPE_CHECKING, List, NamedTuple
 
-import arcade
 from arcade import (
     PymunkPhysicsEngine,
-    Sprite,
     SpriteList,
     View,
+    check_for_collision_with_list,
     set_background_color,
     set_viewport,
     start_render,
 )
-
-from sprites.player import Player
-
 from arcade.key import LEFT, RIGHT, UP, A, D, W
 from arcade.tilemap import process_layer, read_tmx
 
 from errors import IncorrectNumberOfMarkers
-
+from sprites.player import Player
 from static_values import (
     BOOSTED_PLAYER_JUMP_IMPULSE,
     DEFAULT_DAMPING,
@@ -170,9 +166,9 @@ class GameView(View):
 
         self.death_list = process_layer(
             map_object=map,
-            layer_name= death_layer_name,
-            use_spatial_hash= True,
-            scaling =0.5
+            layer_name=death_layer_name,
+            use_spatial_hash=True,
+            scaling=0.5,
         )
 
         # Process the marker and store it's coordinate
@@ -247,7 +243,7 @@ class GameView(View):
         self.window.show_view(self.window.game_over_view)
 
     def check_for_collision_with_death(self) -> bool:
-        return arcade.check_for_collision_with_list(self.player, self.death_list)
+        return len(check_for_collision_with_list(self.player, self.death_list)) > 0
 
     def on_update(self, delta_time: float) -> None:
         if self.check_for_collision_with_death():

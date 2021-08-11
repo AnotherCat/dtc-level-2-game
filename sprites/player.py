@@ -1,7 +1,9 @@
-import arcade
-from arcade import Sprite, Texture
-from typing import List, NamedTuple
 from enum import IntEnum
+from typing import Any, List, NamedTuple
+
+import arcade
+
+from arcade import PymunkPhysicsEngine, Sprite, Texture
 
 
 class FacingDirection(IntEnum):
@@ -55,7 +57,7 @@ class Player(Sprite):
         self.current_texture = 0
 
         # The 'odometer' to track how much the sprite has moved
-        self.x_odometer = 0
+        self.x_odometer: float = 0
 
         # If the player is standing still
         self.idle = True
@@ -78,7 +80,9 @@ class Player(Sprite):
         else:
             return texture_pair.left
 
-    def pymunk_moved(self, physics_engine, dx, dy, d_angle):
+    def pymunk_moved(
+        self, physics_engine: PymunkPhysicsEngine, dx: float, dy: float, d_angle: Any
+    ) -> None:
         """Handle being moved by the pymunk engine"""
         # Figure out if we need to face left or right
         if dx < -self.dead_zone and self.facing == FacingDirection.RIGHT:
@@ -86,13 +90,12 @@ class Player(Sprite):
         elif dx > self.dead_zone and self.facing == FacingDirection.LEFT:
             self.facing = FacingDirection.RIGHT
 
-        # Check if the player is touching the ground
-        is_on_ground = physics_engine.is_on_ground(self)
-
         # Add to the odometer how far we've moved
         self.x_odometer += dx
         """
         # Animation while jumping
+        # Check if the player is touching the ground
+        is_on_ground = physics_engine.is_on_ground(self)
         if not is_on_ground:
             if dy > self.dead_zone:
                 self.texture = self.get_texture_from_pair(self.jump_texture_pair)
