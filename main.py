@@ -4,7 +4,7 @@ import os
 from arcade import Window, run
 
 from static_values import HEIGHT, TITLE, WIDTH
-from views import GameOverView, GameView, InstructionView
+from views import GameOverView, GameView, InstructionView, GameWonView
 
 file_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(file_path)
@@ -17,7 +17,7 @@ class GameWindow(Window):
         self.instruction_view = InstructionView()
         self.game_view = GameView()
         self.game_over_view = GameOverView()
-
+        self.winning_view = GameWonView()
 
 if __name__ == "__main__":
     window = GameWindow(WIDTH, HEIGHT, TITLE)
