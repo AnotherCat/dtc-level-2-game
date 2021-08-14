@@ -51,6 +51,7 @@ class GameView(View):
         self.wall_list: SpriteList
         self.battery_list: SpriteList
         self.death_list: SpriteList
+        self.win_list: SpriteList
         self.player: Player
         self.spring_board_positions: List[CoordinateTuple] = []
 
@@ -111,6 +112,8 @@ class GameView(View):
             collision_type="wall",
             body_type=PymunkPhysicsEngine.STATIC,
         )
+        self.left_pressed = False
+        self.right_pressed = False
 
     def load_map(self, resource: str) -> None:
         """
@@ -132,6 +135,9 @@ class GameView(View):
 
         # This layer contains tiles that if touched kill the player
         death_layer_name = "death"
+
+        # This layer contains tiles that if touched the player will 'win' the level
+        win_layer_name = "end_flag"
 
         # Read the tmx file
         map = read_tmx(resource)
@@ -171,6 +177,13 @@ class GameView(View):
             scaling=0.5,
         )
 
+        self.win_list = process_layer(
+            map_object=map,
+            layer_name = win_layer_name,
+            use_spatial_hash= True,
+            scaling= 0.5,
+        )
+
         # Process the marker and store it's coordinate
         marker_list_len = len(start_marker_list)
         if marker_list_len > 1 or marker_list_len < 1:
@@ -206,6 +219,7 @@ class GameView(View):
         self.wall_list.draw()
         self.battery_list.draw()
         self.death_list.draw()
+        self.win_list.draw()
         self.player.draw()
 
     def calculate_jump_impulse(self) -> int:
@@ -240,14 +254,27 @@ class GameView(View):
             self.right_pressed = False
 
     def death(self) -> None:
+        self.window.game_over_view.setup()
         self.window.show_view(self.window.game_over_view)
+
+    def win(self) -> None:
+        self.window.winning_view.setup()
+        self.window.show_view(self.window.winning_view)
 
     def check_for_collision_with_death(self) -> bool:
         return len(check_for_collision_with_list(self.player, self.death_list)) > 0
 
+    def check_for_collision_with_win(self) -> bool:
+        return len(check_for_collision_with_list(self.player, self.win_list)) > 0
+
     def on_update(self, delta_time: float) -> None:
         if self.check_for_collision_with_death():
             self.death()
+            return
+
+        if self.check_for_collision_with_win():
+            self.win()
+            return
 
         on_ground = self.physics_engine.is_on_ground(self.player)
         if self.left_pressed and not self.right_pressed:
