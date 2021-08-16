@@ -1,3 +1,4 @@
+from label import Label
 from typing import TYPE_CHECKING, List, NamedTuple
 
 from arcade import (
@@ -28,9 +29,11 @@ from static_values import (
     PLAYER_MOVE_FORCE_ON_GROUND,
     TILE_HEIGHT,
     TILE_WIDTH,
+    TIME_PER_POWER_DECREASE,
     VIEWPORT_MARGIN,
     WALL_FRICTION,
     WIDTH,
+    INITIAL_POWER
 )
 
 if TYPE_CHECKING:
@@ -38,6 +41,10 @@ if TYPE_CHECKING:
 
 
 class CoordinateTuple(NamedTuple):
+    """
+    A representation of a coordinate that makes references to coordinates easier to understand.
+    For example `position.x` instead of `position[0]`
+    """
     x: int
     y: int
 
@@ -46,6 +53,7 @@ class GameView(View):
     def __init__(self) -> None:
         super().__init__()
         self.level = 1
+        self.power: float = INITIAL_POWER
         self.view_bottom: int
         self.view_left: int
         self.wall_list: SpriteList
@@ -53,6 +61,8 @@ class GameView(View):
         self.death_list: SpriteList
         self.win_list: SpriteList
         self.player: Player
+        self.power_label: Label
+        self.time_since_last_power_decrease = 0
         self.spring_board_positions: List[CoordinateTuple] = []
 
         # The bottom x and y position that the player should start at
@@ -65,7 +75,13 @@ class GameView(View):
         self.window.set_mouse_visible(False)
         self.window: "GameWindow"
 
+        # If the view should update the viewport
+        # This is false when other views are focused
+        self.inactive = True
+
     def setup(self) -> None:
+        """Sets up the view. This is separate from __init__ so that the view can be 'reset' without recreating the view."""
+        self.inactive = False
         self.load_map(f"./assets/maps/level_{self.level}.tmx")
         self.player = Player(
             frames=3,
@@ -91,6 +107,11 @@ class GameView(View):
         )
 
         gravity = (0, -GRAVITY)
+        self.power = INITIAL_POWER
+        self.power_label = Label(format_string="Power Level: {value}",
+        initial_value=self.power, x_offset = WIDTH - 50, y_offset= HEIGHT - 35)
+
+        self.time_since_last_power_decrease = 0
 
         damping = DEFAULT_DAMPING
 
@@ -221,6 +242,7 @@ class GameView(View):
         self.death_list.draw()
         self.win_list.draw()
         self.player.draw()
+        self.power_label.draw(self.view_left, self.view_bottom, round(self.power,1 ))
 
     def calculate_jump_impulse(self) -> int:
         for pos in self.spring_board_positions:
@@ -254,10 +276,12 @@ class GameView(View):
             self.right_pressed = False
 
     def death(self) -> None:
+        self.inactive = True
         self.window.game_over_view.setup()
         self.window.show_view(self.window.game_over_view)
 
     def win(self) -> None:
+        self.inactive = True
         self.window.winning_view.setup()
         self.window.show_view(self.window.winning_view)
 
@@ -267,14 +291,48 @@ class GameView(View):
     def check_for_collision_with_win(self) -> bool:
         return len(check_for_collision_with_list(self.player, self.win_list)) > 0
 
-    def on_update(self, delta_time: float) -> None:
-        if self.check_for_collision_with_death():
+    def check_for_collision_with_battery(self):
+        list = check_for_collision_with_list(self.player, self.battery_list)
+        for battery in list:
+            battery.remove_from_sprite_lists()
+            self.power_label.flash(10)
+            self.power += 1
+
+    def reduce_power(self, delta_time: float) -> None:
+        """Reduces the power based on how much time has passed
+
+        Args:
+            delta_time (float): The time since last update
+        """
+        to_decrease = 1 /  TIME_PER_POWER_DECREASE * delta_time
+        self.power -= to_decrease
+        """
+        self.time_since_last_power_decrease += delta_time
+        if self.time_since_last_power_decrease >= TIME_PER_POWER_DECREASE:
+            self.time_since_last_power_decrease -=TIME_PER_POWER_DECREASE
+            self.power -= 1
+        """
+
+    def check_power(self) -> None:
+        """Check to see if the power is too low
+        """
+        if self.power <= 0:
             self.death()
             return
-
+    def on_update(self, delta_time: float) -> None:
+        if self.check_for_collision_with_death() or self.player.center_y < self.player.height - 300 or self.player.center_x <= self.player.width / 2:
+            self.death()
+            return
         if self.check_for_collision_with_win():
             self.win()
             return
+
+        self.check_for_collision_with_battery()
+
+
+        self.reduce_power(delta_time=delta_time)
+        self.check_power()
+        self.power_label.update(delta_time=delta_time)
 
         on_ground = self.physics_engine.is_on_ground(self.player)
         if self.left_pressed and not self.right_pressed:
@@ -295,13 +353,8 @@ class GameView(View):
 
         self.physics_engine.step()
 
-        if self.player.center_y < self.player.height - 300:
-            self.death()
-            return
+        
         changed = False
-
-        if self.player.center_x <= self.player.width / 2:
-            self.death()
 
         max_left_distance = self.view_left + VIEWPORT_MARGIN
         if self.player.left < max_left_distance:
@@ -332,9 +385,9 @@ class GameView(View):
 
         self.view_left = int(self.view_left)
         self.view_bottom = int(self.view_bottom)
-
+        
         # If we changed the boundary values, update the view port to match
-        if changed:
+        if changed and not self.inactive:
             set_viewport(
                 self.view_left,
                 WIDTH + self.view_left,
