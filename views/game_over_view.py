@@ -18,11 +18,12 @@ class GameOverView(View):
 
         self.window.set_mouse_visible(True)
         # Make the mouse visible
+        self.window: "GameWindow"
 
+    def setup(self) -> None:
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
         set_viewport(0, WIDTH - 1, 0, HEIGHT - 1)
-        self.window: "GameWindow"
 
     def on_draw(self) -> None:
         """Draw this view"""
