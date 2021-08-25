@@ -20,6 +20,7 @@ from static_values import (
     DEFAULT_DAMPING,
     GRAVITY,
     HEIGHT,
+    MAX_LEVEL,
     PLAYER_FRICTION,
     PLAYER_JUMP_IMPULSE,
     PLAYER_MASS,
@@ -52,7 +53,7 @@ class CoordinateTuple(NamedTuple):
 class GameView(View):
     def __init__(self) -> None:
         super().__init__()
-        self.level = 1
+        self.level = 2
         self.power: float = INITIAL_POWER
         self.view_bottom: int
         self.view_left: int
@@ -281,9 +282,13 @@ class GameView(View):
         self.window.show_view(self.window.game_over_view)
 
     def win(self) -> None:
-        self.inactive = True
-        self.window.winning_view.setup()
-        self.window.show_view(self.window.winning_view)
+        self.level += 1
+        if self.level > MAX_LEVEL:
+            self.inactive = True
+            self.window.winning_view.setup()
+            self.window.show_view(self.window.winning_view)
+        else:
+            self.setup()
 
     def check_for_collision_with_death(self) -> bool:
         return len(check_for_collision_with_list(self.player, self.death_list)) > 0
