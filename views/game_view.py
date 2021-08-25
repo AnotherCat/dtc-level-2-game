@@ -1,9 +1,10 @@
 from label import Label
-from typing import TYPE_CHECKING, List, NamedTuple
+from typing import TYPE_CHECKING, List, NamedTuple, Optional
 
 from arcade import (
     PymunkPhysicsEngine,
     SpriteList,
+    Sprite,
     View,
     check_for_collision_with_list,
     set_background_color,
@@ -12,6 +13,7 @@ from arcade import (
 )
 from arcade.key import LEFT, RIGHT, UP, A, D, W
 from arcade.tilemap import process_layer, read_tmx
+from copy import deepcopy
 
 from errors import IncorrectNumberOfMarkers
 from sprites.player import Player
@@ -50,6 +52,22 @@ class CoordinateTuple(NamedTuple):
     y: int
 
 
+class MovingUpTileGenerator:
+    """
+    A class for 'deciding' when to 'generate' a new moving up sprite
+    """
+    def __init__(self, time_per_generation: float, sprite: Sprite) -> None:
+        self.sprite = sprite
+        self.time_until_next_generation = 0
+        self.time_per_generation = time_per_generation
+
+    def update(self, delta_time: float) -> Optional[Sprite]:
+        self.time_until_next_generation -= delta_time
+        if self.time_until_next_generation <= 0:
+            self.time_until_next_generation = self.time_per_generation
+            
+            return deepcopy(self.sprite)
+
 class GameView(View):
     def __init__(self) -> None:
         super().__init__()
@@ -61,6 +79,12 @@ class GameView(View):
         self.battery_list: SpriteList
         self.death_list: SpriteList
         self.win_list: SpriteList
+
+        # List of sprites that are moving up currently
+        self.moving_up_list: SpriteList
+
+        # The list of sprites that sprites will "rise" from
+        self.static_moving_up_list: List[MovingUpTileGenerator]
         self.player: Player
         self.power_label: Label
         self.time_since_last_power_decrease = 0
@@ -81,7 +105,10 @@ class GameView(View):
         self.inactive = True
 
     def setup(self) -> None:
+
         """Sets up the view. This is separate from __init__ so that the view can be 'reset' without recreating the view."""
+        self.static_moving_up_list = []
+        self.moving_up_list = SpriteList()
         self.inactive = False
         self.load_map(f"./assets/maps/level_{self.level}.tmx")
         self.player = Player(
@@ -90,6 +117,8 @@ class GameView(View):
             dead_zone=0.5,
             distance_before_change_texture=20,
         )
+
+        
 
         # Add set the x,y positions of the player so that the bottom position of the player is inline with the stored position
         self.player.center_x = self.player_start_position.x + (self.player.height / 2)
@@ -134,6 +163,8 @@ class GameView(View):
             collision_type="wall",
             body_type=PymunkPhysicsEngine.STATIC,
         )
+        self.physics_engine.add_sprite_list(self.moving_up_list, body_type=PymunkPhysicsEngine.KINEMATIC,
+ )
         self.left_pressed = False
         self.right_pressed = False
 
@@ -160,6 +191,9 @@ class GameView(View):
 
         # This layer contains tiles that if touched the player will 'win' the level
         win_layer_name = "end_flag"
+
+        # This layer contain the 'start' point of the moving upwards tiles
+        moving_up_layer_name = "rising_only"
 
         # Read the tmx file
         map = read_tmx(resource)
@@ -206,6 +240,13 @@ class GameView(View):
             scaling= 0.5,
         )
 
+        moving_up_list = process_layer(
+            map_object=map,
+            layer_name =moving_up_layer_name,
+            use_spatial_hash= False,
+            scaling = 0.5
+        )
+
         # Process the marker and store it's coordinate
         marker_list_len = len(start_marker_list)
         if marker_list_len > 1 or marker_list_len < 1:
@@ -233,6 +274,18 @@ class GameView(View):
                 )
             )
 
+        for moving_up in moving_up_list:
+            seconds_per_tile = 3
+            #if moving_up.seconds_per_tile:
+             #   seconds_per_tile = moving_up.seconds_per_tile
+            moving_tile_generator = MovingUpTileGenerator(
+                    time_per_generation=seconds_per_tile,
+                    sprite = moving_up
+                )
+            self.static_moving_up_list.append(
+                moving_tile_generator
+            )
+
         if map.background_color:
             set_background_color(map.background_color)
 
@@ -243,6 +296,7 @@ class GameView(View):
         self.death_list.draw()
         self.win_list.draw()
         self.player.draw()
+        self.moving_up_list.draw()
         self.power_label.draw(self.view_left, self.view_bottom, round(self.power,1 ))
 
     def calculate_jump_impulse(self) -> int:
@@ -324,7 +378,39 @@ class GameView(View):
         if self.power <= 0:
             self.death()
             return
+
+    def update_moving_sprites(self, delta_time: float) -> None:
+        for moving_up in self.static_moving_up_list:
+            moving_sprite = moving_up.update(delta_time)
+            if moving_sprite is not None:
+                moving_sprite.change_y = 50
+                self.moving_up_list.append(moving_sprite)
+                self.physics_engine.add_sprite(
+                    moving_sprite,
+                    body_type=PymunkPhysicsEngine.KINEMATIC
+                )
+
+        for moving_sprite in self.moving_up_list:
+            if moving_sprite.boundary_top and \
+                    moving_sprite.top > moving_sprite.boundary_top:
+                moving_sprite.remove_from_sprite_lists()
+                return
+            if moving_sprite.right > (WIDTH + self.view_left) or \
+                    moving_sprite.left < (self.view_left) or \
+                    moving_sprite.top > (HEIGHT + self.view_bottom):
+                # The bottom is not included in the check because it starts below the view port
+                moving_sprite.remove_from_sprite_lists()
+                return
+
+            # Figure out and set our moving platform velocity.
+            # Pymunk uses velocity is in pixels per second. If we instead have
+            # pixels per frame, we need to convert.
+            velocity = (moving_sprite.change_x * 1 / delta_time, moving_sprite.change_y * 1 / delta_time)
+            self.physics_engine.set_velocity(moving_sprite, velocity)
     def on_update(self, delta_time: float) -> None:
+        self.update_moving_sprites(delta_time)
+
+
         if self.check_for_collision_with_death() or self.player.center_y < self.player.height - 300 or self.player.center_x <= self.player.width / 2:
             self.death()
             return
