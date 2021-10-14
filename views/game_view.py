@@ -36,7 +36,8 @@ from static_values import (
     VIEWPORT_MARGIN,
     WALL_FRICTION,
     WIDTH,
-    INITIAL_POWER
+    INITIAL_POWER,
+    START_LEVEL
 )
 
 if TYPE_CHECKING:
@@ -71,7 +72,7 @@ class MovingUpTileGenerator:
 class GameView(View):
     def __init__(self) -> None:
         super().__init__()
-        self.level = 2
+        self.level = START_LEVEL
         self.power: float = INITIAL_POWER
         self.view_bottom: int
         self.view_left: int
@@ -341,6 +342,7 @@ class GameView(View):
             self.inactive = True
             self.window.winning_view.setup()
             self.window.show_view(self.window.winning_view)
+            self.level = START_LEVEL
         else:
             self.setup()
 
