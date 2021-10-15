@@ -2,7 +2,7 @@ from random import randrange
 from typing import List
 
 
-def get_random(start: float, stop: float):
+def get_random(start: float, stop: float) -> float:
     start *= 100
     stop *= 100
     int_start = int(start)
@@ -38,7 +38,7 @@ class PowerManager:
         Returns:
             float: [description]
         """
-        total = 0
+        total: float = 0
         count = 0
         for value in self.previous_values:
             total += value

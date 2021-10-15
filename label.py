@@ -21,15 +21,15 @@ class Label:
             y_offset (int): The x offset from the x supplied on draw
         """
         self.format_string = format_string
-        self.value = self.set_value(initial_value)
+        self.value = self.format_value(initial_value)
         self.x_offset = x_offset
         self.y_offset = y_offset
-        self.flash_duration_left = 0
-        self.font_size = 16
+        self.flash_duration_left: float = 0
+        self.font_size: float = 16
         self.original_font_size = 16
 
-    def set_value(self, new_value: Union[str, int, float]) -> str:
-        """Formats the formate string with the string provided and sets and returns that.
+    def format_value(self, new_value: Union[str, int, float]) -> str:
+        """Formats the formate string with the string provided and returns that.
 
         Args:
             new_value (Union[str, int, float]): The new value to format the formate string with
@@ -37,7 +37,7 @@ class Label:
         Returns:
             str: Formatted value
         """
-        self.value = self.format_string.format(value=new_value)
+        return self.format_string.format(value=new_value)
 
     def draw(
         self, x: int, y: int, new_value: Optional[Union[str, int, float]] = None
@@ -50,7 +50,7 @@ class Label:
             new_value (Optional[Union[str, int, float]], optional): The new value to pass into the format string. Defaults to None and will not be updated if None.
         """
         if new_value is not None:
-            self.set_value(new_value)
+            self.value = self.format_value(new_value)
         draw_text(
             text=self.value,
             start_x=x + self.x_offset,

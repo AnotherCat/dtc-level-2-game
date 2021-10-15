@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Any, List, NamedTuple
+from typing import List, NamedTuple
 
 import arcade
 
