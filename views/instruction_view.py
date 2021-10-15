@@ -42,7 +42,7 @@ class InstructionView(View):
             HEIGHT / 2 - 40,
             WHITE,
             font_size=20,
-            anchor_x=  'center'
+            anchor_x="center",
         )
         draw_text(
             "Click to advance",

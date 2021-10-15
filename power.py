@@ -1,5 +1,6 @@
-from typing import List
 from random import randrange
+from typing import List
+
 
 def get_random(start: float, stop: float):
     start *= 100
@@ -12,14 +13,15 @@ def get_random(start: float, stop: float):
 
 class PowerManager:
     """
-    This class is to generate how much power each battery should give. 
+    This class is to generate how much power each battery should give.
     The amount is random between specified values, and the range changes depending on the value of previous generated powers
-    For example if the range was between 1 and 2, and the first time the value was 1.9, 
-    the next time the range would be from 1 to a number slightly less than one. 
+    For example if the range was between 1 and 2, and the first time the value was 1.9,
+    the next time the range would be from 1 to a number slightly less than one.
     """
+
     def __init__(self, top_range: float, bottom_range: float) -> None:
         """
-        Initialize the power manager. 
+        Initialize the power manager.
 
         Args:
             top_range (float): The top of the range of values to output
@@ -59,6 +61,6 @@ class PowerManager:
                 bottom_range -= difference
             print(top_range, bottom_range, average, mid_point, difference)
 
-        value =  get_random(bottom_range, top_range)
+        value = get_random(bottom_range, top_range)
         self.previous_values.append(value)
         return value

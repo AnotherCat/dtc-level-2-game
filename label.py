@@ -1,11 +1,18 @@
 from typing import Optional, Union
+
 from arcade import draw_text
 from arcade.color import BLIZZARD_BLUE
 
 
 class Label:
-    def __init__(self, format_string: str, initial_value: Union[str, int, float], x_offset: int, y_offset: int) -> None:
-        """Create Label 
+    def __init__(
+        self,
+        format_string: str,
+        initial_value: Union[str, int, float],
+        x_offset: int,
+        y_offset: int,
+    ) -> None:
+        """Create Label
 
         Args:
             format_string (str): The string to format values against. Must have one of "{value}" where the value will be.
@@ -30,9 +37,11 @@ class Label:
         Returns:
             str: Formatted value
         """
-        self.value = self.format_string.format(value = new_value)
+        self.value = self.format_string.format(value=new_value)
 
-    def draw(self, x:int, y:int, new_value: Optional[Union[str, int, float]] = None) -> None:
+    def draw(
+        self, x: int, y: int, new_value: Optional[Union[str, int, float]] = None
+    ) -> None:
         """Draws the text label in the specificed position.
 
         Args:
@@ -43,12 +52,12 @@ class Label:
         if new_value is not None:
             self.set_value(new_value)
         draw_text(
-            text = self.value,
-            start_x= x + self.x_offset,
-            start_y= y + self.y_offset,
-            color = BLIZZARD_BLUE,
+            text=self.value,
+            start_x=x + self.x_offset,
+            start_y=y + self.y_offset,
+            color=BLIZZARD_BLUE,
             font_size=self.font_size,
-            anchor_x='right'
+            anchor_x="right",
         )
 
     def flash(self, duration: float) -> None:
