@@ -541,8 +541,8 @@
   <object id="1" gid="28" x="12415.9" y="10112.3" width="128" height="128">
    <properties>
     <property name="boundary_top" type="float" value="3800"/>
-    <property name="change_y" type="float" value="0.3"/>
     <property name="seconds_per_tile" type="float" value="4"/>
+    <property name="set_change_y" type="float" value="0.3"/>
    </properties>
   </object>
  </objectgroup>

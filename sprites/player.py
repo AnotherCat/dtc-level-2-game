@@ -3,7 +3,7 @@ from typing import Any, List, NamedTuple
 
 import arcade
 
-from arcade import PymunkPhysicsEngine, Sprite, Texture
+from arcade import PhysicsEnginePlatformer, Sprite, Texture
 
 
 class FacingDirection(IntEnum):
@@ -30,7 +30,6 @@ class Player(Sprite):
     "image_path" The path to the characters images, "_frame_{frame_num}.png" will be appended. (frame_num is 0 to (frames - 1))
     The idle frame must be "{image_path}_idle.png"
     All images must be facing right
-    "dead_zone" the amount of distance to ignore movement, so that animations are not updating constantly
     "distance_before_change_texture" the distance moved to update the animation after
     """
 
@@ -38,7 +37,6 @@ class Player(Sprite):
         self,
         frames: int,
         image_path: str,
-        dead_zone: float,
         distance_before_change_texture: int,
     ) -> None:
         """Setup the player"""
@@ -46,7 +44,6 @@ class Player(Sprite):
 
         # Set passed through vars
         self.frames = frames
-        self.dead_zone = dead_zone
         self.distance_before_change_texture = distance_before_change_texture
 
         # Stores what direction the character is facing. This is used to access the texture list
@@ -56,14 +53,14 @@ class Player(Sprite):
         # Which texture is currently loaded / to be loaded. It is 0 to (frames - 1)
         self.current_texture = 0
 
-        # The 'odometer' to track how much the sprite has moved
-        self.x_odometer: float = 0
-
         # If the player is standing still
         self.idle = True
 
         # Load the idle texture pair
         self.idle_texture_pair = load_texture_pair(f"{image_path}_idle.png")
+
+        # Used to measure the distance the player has travelled, then used to move the animation frames
+        self.last_x_position = self.center_x
 
         # Load the textures for moving. This will have "frames" number of items
         self.moving_textures: List[TexturePair] = []
@@ -80,40 +77,48 @@ class Player(Sprite):
         else:
             return texture_pair.left
 
-    def pymunk_moved(
-        self, physics_engine: PymunkPhysicsEngine, dx: float, dy: float, d_angle: Any
+    def update_animation_with_physics(
+        self, physics_engine: PhysicsEnginePlatformer, delta_time: float = 1 / 60
     ) -> None:
         """Handle being moved by the pymunk engine"""
         # Figure out if we need to face left or right
-        if dx < -self.dead_zone and self.facing == FacingDirection.RIGHT:
+        if self.change_x < 0 and self.facing == FacingDirection.RIGHT:
             self.facing = FacingDirection.LEFT
-        elif dx > self.dead_zone and self.facing == FacingDirection.LEFT:
+        elif self.change_x > 0 and self.facing == FacingDirection.LEFT:
             self.facing = FacingDirection.RIGHT
-
-        # Add to the odometer how far we've moved
-        self.x_odometer += dx
 
         # Animation while jumping, this is set to the 'idle' texture
         # Check if the player is touching the ground
 
-        if not physics_engine.is_on_ground(self):
+        if not physics_engine.can_jump():
             self.texture = self.get_texture_from_pair(self.idle_texture_pair)
+
+            # Also reset the moving textures, and set the last position to the current position
+            # so that the animation doesn't 'jump' when it lands
+            self.last_x_position = self.center_x
+            self.current_texture = 0
             return
 
         # Animation while idle
-        if abs(dx) <= self.dead_zone:
+        if self.change_x == 0:
             self.texture = self.get_texture_from_pair(self.idle_texture_pair)
+
+            # Also reset the moving textures, and set the last position to the current position
+            # so that the animation doesn't 'jump' when it starts moving again
+            self.last_x_position = self.center_x
+            self.current_texture = 0
             return
 
-        # Check if the player has moved enough to change the texture
-        if abs(self.x_odometer) > self.distance_before_change_texture:
+        x_moved = abs(self.last_x_position - self.center_x)
 
-            # Reset the odometer
-            self.x_odometer = 0
+        # Check if the player has moved enough to change the texture
+        if x_moved >= self.distance_before_change_texture:
+            self.last_x_position = self.center_x
 
             # Move the current texture to the next texture
             self.current_texture += 1
             if self.current_texture > (self.frames - 1):
+
                 self.current_texture = 0
             self.texture = self.get_texture_from_pair(
                 self.moving_textures[self.current_texture]
