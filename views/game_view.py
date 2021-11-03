@@ -273,12 +273,12 @@ class GameView(View):
 
     def on_draw(self) -> None:
         start_render()
+        self.moving_up_list.draw()
         self.wall_list.draw()
         self.battery_list.draw()
         self.death_list.draw()
         self.win_list.draw()
         self.player.draw()
-        self.moving_up_list.draw()
         self.power_label.draw(self.view_left, self.view_bottom, round(self.power, 1))
 
     def calculate_jump_speed(self) -> int:
