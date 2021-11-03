@@ -366,7 +366,7 @@ class GameView(View):
             )  # See if a new sprite should be generated
 
             if moving_sprite is not None:
-                moving_sprite.change_y = 4
+                moving_sprite.change_y = 3
                 self.moving_up_list.append(moving_sprite)
                 self.contact_list.append(moving_sprite)
         for moving_sprite in self.moving_up_list:
