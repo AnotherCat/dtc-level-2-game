@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.1" orientation="orthogonal" renderorder="right-down" width="53" height="38" tilewidth="128" tileheight="128" infinite="0" nextlayerid="7" nextobjectid="1">
+<map version="1.5" tiledversion="1.7.1" orientation="orthogonal" renderorder="right-down" width="53" height="38" tilewidth="128" tileheight="128" infinite="0" nextlayerid="8" nextobjectid="1">
  <tileset firstgid="1" source="../tilesheets/ice_with_water_tileset.tsx"/>
  <tileset firstgid="33" source="../tilesheets/extras_tilesheet.tsx"/>
  <tileset firstgid="97" source="../tilesheets/ice_with_water_tileset_springboard.tsx"/>
@@ -46,6 +46,7 @@
 17,18,18,18,19,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="7" name="rising_only"/>
  <layer id="5" name="death" width="53" height="38">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
