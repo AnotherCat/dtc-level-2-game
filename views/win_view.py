@@ -20,16 +20,35 @@ class GameWonView(View):
         # Make the mouse visible
         self.window: "GameWindow"
 
+        # Value to show next to winning
+        self.value = ""
+        self.clock: float = 0
+
     def setup(self) -> None:
         # Reset the viewport, necessary if we have a scrolling game and we need
         # to reset the viewport back to the start so we can see what we draw.
         set_viewport(0, WIDTH - 1, 0, HEIGHT - 1)
+        self.value = ""
+        self.clock = 0
 
     def on_draw(self) -> None:
         """Draw this view"""
         start_render()
         draw_text(
-            "You won!", WIDTH / 2, HEIGHT / 2, WHITE, font_size=50, anchor_x="center"
+            "You won!",
+            WIDTH / 2,
+            HEIGHT / 2,
+            WHITE,
+            font_size=50,
+            anchor_x="center",
+        )
+        draw_text(
+            self.value,
+            WIDTH / 2,
+            HEIGHT / 2 - 100,
+            WHITE,
+            font_size=20,
+            anchor_x="center",
         )
         draw_text(
             "Click to play again",
@@ -39,6 +58,13 @@ class GameWonView(View):
             font_size=20,
             anchor_x="center",
         )
+
+    def on_update(self, delta_time: float):
+        self.clock += delta_time / 2
+        if self.clock > 0.5 and self.clock < 2.0:
+            self.value = "\n\nFound a communicator, attempting to contact base..."
+        elif self.clock > 2.0:
+            self.value = "\n\nGot a signal! Looks like they're on their way"
 
     def on_mouse_press(
         self, _x: float, _y: float, _button: int, _modifiers: int
