@@ -112,8 +112,16 @@ class GameView(View):
         # This is false when other views are focused
         self.inactive = True
 
-    def setup(self) -> None:
-        """Sets up the view. This is separate from __init__ so that the view can be 'reset' without recreating the view."""
+    def setup(self, force_level: Optional[int] = None) -> None:
+        """
+        Sets up the view. This is separate from __init__ so that the view can be 'reset' without recreating the view.
+
+        Args:
+            force_level (Optional[int], optional): Force which level the game should be "setup" at. Defaults to None.
+        """
+
+        if force_level:
+            self.level = force_level
 
         # Controls the moving sprites
         self.static_moving_up_list = []
@@ -310,7 +318,7 @@ class GameView(View):
         Display the death view
         """
         self.inactive = True
-        self.window.game_over_view.setup()
+        self.window.game_over_view.setup(self.level)
         self.window.show_view(self.window.game_over_view)
 
     def win(self) -> None:
