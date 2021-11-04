@@ -70,11 +70,16 @@ class GameView(View):
     def __init__(self) -> None:
         super().__init__()
         self.level = START_LEVEL
+
+        # Power management
         self.power: PowerManager
         self.not_enough_power_label: EphemeralLabel
 
+        # Controls the scroll of the screen
         self.view_bottom: int
         self.view_left: int
+
+        # Sprite lists
         self.battery_list: SpriteList
         self.death_list: SpriteList
         self.win_list: SpriteList
@@ -97,7 +102,10 @@ class GameView(View):
         self.player_start_position: CoordinateTuple
         self.physics_engine: PhysicsEnginePlatformer
 
+        # Hide the mouse
         self.window.set_mouse_visible(False)
+
+        # Typehint (arcade internals)
         self.window: "GameWindow"
 
         # If the view should update the viewport
@@ -105,10 +113,12 @@ class GameView(View):
         self.inactive = True
 
     def setup(self) -> None:
-
         """Sets up the view. This is separate from __init__ so that the view can be 'reset' without recreating the view."""
+
+        # Controls the moving sprites
         self.static_moving_up_list = []
         self.moving_up_list = SpriteList()
+
         self.inactive = False
         self.load_map(f"./assets/maps/level_{self.level}.tmx")
         self.player = Player(
@@ -132,6 +142,8 @@ class GameView(View):
             if self.player.left > VIEWPORT_MARGIN
             else 0
         )
+
+        # Power manager
         self.power = PowerManager(self.battery_list, self.player)
 
         self.not_enough_power_label = EphemeralLabel(
@@ -144,7 +156,7 @@ class GameView(View):
             "center",
         )
 
-        # Perform an effectlivy "shallow copy" of the wall_list
+        # Perform a "shallow copy" of the wall_list
         # so that when appending to contact_list that doesn't also append to the wall_list
         # normal shallow copy functions like copy.copy() or List[:] (https://docs.python.org/3/library/copy.html) don't seem to work with arcade SpriteLists
         self.contact_list = SpriteList(use_spatial_hash=True)
@@ -263,8 +275,6 @@ class GameView(View):
 
         for moving_up in moving_up_list:
             seconds_per_tile = 3
-            # if moving_up.seconds_per_tile:
-            #   seconds_per_tile = moving_up.seconds_per_tile
             moving_tile_generator = MovingUpTileGenerator(
                 time_per_generation=seconds_per_tile, sprite=moving_up
             )
@@ -273,17 +283,14 @@ class GameView(View):
         if map.background_color:
             set_background_color(map.background_color)
 
-    def on_draw(self) -> None:
-        start_render()
-        self.moving_up_list.draw()
-        self.wall_list.draw()
-        self.power.draw(self.view_left, self.view_bottom)
-        self.death_list.draw()
-        self.win_list.draw()
-        self.player.draw()
-        self.not_enough_power_label.draw(self.view_left, self.view_bottom)
-
     def calculate_jump_speed(self) -> int:
+        """
+        The player can jump at different heights depending upon if it's resting on a springboard
+        If it is it gets a higher jump speed
+
+        Returns:
+            int: The calculated jump speed
+        """
         for pos in self.spring_board_positions:
             colliding_x = (
                 pos.x < self.player.center_x
@@ -298,26 +305,18 @@ class GameView(View):
 
         return PLAYER_JUMP_SPEED
 
-    def on_key_press(self, key: int, modifiers: int) -> None:
-        if key == LEFT or key == A:
-            self.player.change_x = -PLAYER_MOVEMENT_SPEED
-        elif key == RIGHT or key == D:
-            self.player.change_x = PLAYER_MOVEMENT_SPEED
-        elif key == UP or W:
-            if self.physics_engine.can_jump():
-
-                self.player.change_y = self.calculate_jump_speed()
-
-    def on_key_release(self, key: int, modifiers: int) -> None:
-        if key == LEFT or key == A or key == RIGHT or key == D:
-            self.player.change_x = 0
-
     def death(self) -> None:
+        """
+        Display the death view
+        """
         self.inactive = True
         self.window.game_over_view.setup()
         self.window.show_view(self.window.game_over_view)
 
     def win(self) -> None:
+        """
+        Check if the player can win, and if so either increment the level or display the winning view
+        """
         if not self.power.has_power:
             self.not_enough_power_label.show("")
             return
@@ -331,12 +330,30 @@ class GameView(View):
             self.setup()
 
     def check_for_collision_with_death(self) -> bool:
+        """
+        Checks if the player is colliding with the death sprites
+
+        Returns:
+            bool: result
+        """
         return len(check_for_collision_with_list(self.player, self.death_list)) > 0
 
     def check_for_collision_with_win(self) -> bool:
+        """
+        Checks if the player is colliding with the win sprites
+
+        Returns:
+            bool: result
+        """
         return len(check_for_collision_with_list(self.player, self.win_list)) > 0
 
     def update_moving_sprites(self, delta_time: float) -> None:
+        """
+        Manage the moving sprites
+
+        Args:
+            delta_time (float)
+        """
         for moving_up in self.static_moving_up_list:
             moving_sprite = moving_up.update(
                 delta_time
@@ -346,6 +363,8 @@ class GameView(View):
                 moving_sprite.change_y = 3
                 self.moving_up_list.append(moving_sprite)
                 self.contact_list.append(moving_sprite)
+
+        # Check if sprites need to be removed
         for moving_sprite in self.moving_up_list:
             if (
                 moving_sprite.boundary_top
@@ -363,29 +382,10 @@ class GameView(View):
                 return
             moving_sprite.update()
 
-            # NOTE MAY NEED TO ADD SETTING THE SPRITE'S SPEED HERE
-
-    def on_update(self, delta_time: float) -> None:
-        self.not_enough_power_label.update(delta_time)
-        self.update_moving_sprites(delta_time)
-        self.player.update_animation_with_physics(
-            physics_engine=self.physics_engine, delta_time=delta_time
-        )
-
-        if (
-            self.check_for_collision_with_death()
-            or self.player.center_y < self.player.height - 300
-            or self.player.center_x <= self.player.width / 2
-        ):
-            self.death()
-            return
-
-        self.power.check_collision()
-
-        self.power.update(delta_time=delta_time)
-
-        self.physics_engine.update()
-
+    def update_scroll(self) -> None:
+        """
+        Scrolls the viewport if needed
+        """
         changed = False
 
         max_left_distance = self.view_left + VIEWPORT_MARGIN
@@ -426,5 +426,81 @@ class GameView(View):
                 self.view_bottom,
                 HEIGHT + self.view_bottom,
             )
+
+    def on_update(self, delta_time: float) -> None:
+        """
+        Arcade update
+
+        Args:
+            delta_time (float)
+        """
+        # Update various separate classes
+        self.not_enough_power_label.update(delta_time)
+        self.update_moving_sprites(delta_time)
+        self.power.update(delta_time=delta_time)
+        self.player.update_animation_with_physics(
+            physics_engine=self.physics_engine, delta_time=delta_time
+        )
+
+        # Check if colliding with death sprites or off screen
+
+        if (
+            self.check_for_collision_with_death()
+            or self.player.center_y < self.player.height - 300
+            or self.player.center_x <= self.player.width / 2
+        ):
+            self.death()
+            return
+
+        # Move viewport if needed
+        self.update_scroll()
+
+        # Update physics objects
+        self.physics_engine.update()
+
+        # Check collisions
+        self.power.check_collision()
         if self.check_for_collision_with_win():
             self.win()
+
+    def on_key_press(self, key: int, modifiers: int) -> None:
+        """
+        Handle jumping and movement
+
+        Args:
+            key (int): The key that was pressed
+            modifiers (int): Unused (arcade)
+        """
+        if key == LEFT or key == A:
+            self.player.change_x = -PLAYER_MOVEMENT_SPEED
+        elif key == RIGHT or key == D:
+            self.player.change_x = PLAYER_MOVEMENT_SPEED
+        elif key == UP or W:
+            if self.physics_engine.can_jump():
+
+                self.player.change_y = self.calculate_jump_speed()
+
+    def on_key_release(self, key: int, modifiers: int) -> None:
+        """
+        Stop player moving on key release
+
+        Args:
+            key (int): The key that was released
+            modifiers (int): Unused (arcade)
+        """
+        if key == LEFT or key == A or key == RIGHT or key == D:
+            self.player.change_x = 0
+
+    def on_draw(self) -> None:
+        """
+        Draw objects to screen
+        The order is in a way that what needs to be on top is drawn last
+        """
+        start_render()
+        self.moving_up_list.draw()
+        self.wall_list.draw()
+        self.power.draw(self.view_left, self.view_bottom)
+        self.death_list.draw()
+        self.win_list.draw()
+        self.player.draw()
+        self.not_enough_power_label.draw(self.view_left, self.view_bottom)

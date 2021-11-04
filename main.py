@@ -1,4 +1,3 @@
-import logging
 import os
 
 from arcade import Window, run
@@ -6,9 +5,9 @@ from arcade import Window, run
 from static_values import HEIGHT, TITLE, WIDTH
 from views import GameOverView, GameView, GameWonView, InstructionView
 
+# Change the file path to the directory `main.py` is in. This ensures that asset path's will work
 file_path = os.path.dirname(os.path.abspath(__file__))
 os.chdir(file_path)
-logging.basicConfig(level=logging.INFO)
 
 
 class GameWindow(Window):

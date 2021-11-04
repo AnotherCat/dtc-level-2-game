@@ -24,6 +24,14 @@ class PageTuple(NamedTuple):
     sprite_generator: Optional[Callable[..., SpriteList]]
 
 
+"""
+Functions below are in the format:
+
+draw_<pagename>_page_message -> Drawing the text for that instruction screen
+generate_<pagename>_sprites -> Return a sprite list with the sprites for that instruction screen
+"""
+
+
 def draw_gameplay_page_message() -> None:
     base_width = WIDTH / 2 - 300
     base_height = HEIGHT / 2 + 100
@@ -136,6 +144,12 @@ class InstructionView(View):
         self.set_page(0)
 
     def set_page(self, index: int) -> None:
+        """
+        Sets the current page
+
+        Args:
+            index (int): Which page to set to
+        """
         self.current_page_index = index
         self.current_page = pages[index]
         if self.current_page.sprite_generator:
@@ -164,6 +178,8 @@ class InstructionView(View):
             font_size=25,
             anchor_x="center",
         )
+
+        # Allows for just string, or a more complicated function
         if isinstance(self.current_page.message, str):
             draw_text(
                 self.current_page.message,
@@ -185,6 +201,9 @@ class InstructionView(View):
         )
 
     def start_game(self) -> None:
+        """
+        Switches to the game view
+        """
         game_view = self.window.game_view
         game_view.setup()
         self.window.show_view(game_view)

@@ -1,3 +1,5 @@
+# Constant values that are shared accross files
+
 PLAYER_JUMP_SPEED = 12
 BOOSTED_PLAYER_JUMP_SPEED = 18
 
@@ -12,10 +14,6 @@ HEIGHT = 6 * TILE_HEIGHT
 VIEWPORT_MARGIN = 280
 TITLE = "Ice Game"
 
-
-INITIAL_POWER = 30
-
-TIME_PER_POWER_DECREASE = 20
 
 MAX_LEVEL = 3
 START_LEVEL = 1  # 2 for testing, this should be changed to 1 on release

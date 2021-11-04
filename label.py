@@ -5,6 +5,10 @@ from arcade.color import BLIZZARD_BLUE
 
 
 class Label:
+    """
+    Labels provide an abstracted way of drawing text in the same part of the screen, no matter the screen scroll
+    """
+
     def __init__(
         self,
         format_string: str,
