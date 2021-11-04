@@ -11,10 +11,12 @@ def get_random(start: float, stop: float) -> float:
     return round(value, 2)
 
 
-class PowerManager:
+class RandomManager:
     """
-    This class is to generate how much power each battery should give.
-    The amount is random between specified values, and the range changes depending on the value of previous generated powers
+    This class is to generate a random value depending on the previous values, so that the
+    values are evened out over the generation of the values.
+    The amount is random between specified values, and the range changes depending
+    on the value of previous generated powers
     For example if the range was between 1 and 2, and the first time the value was 1.9,
     the next time the range would be from 1 to a number slightly less than one.
     """
@@ -46,11 +48,16 @@ class PowerManager:
 
         return total / count
 
-    def generate_power(self) -> float:
+    def generate_value(self) -> float:
+        """
+        Generates a value that's been 'evened out'
+
+        Returns:
+            float: The generated value
+        """
         top_range = self.init_top_range
         bottom_range = self.init_bottom_range
 
-        print(top_range, bottom_range)
         if len(self.previous_values) > 0:
             average = self.get_average()
             mid_point = (self.init_top_range - self.init_bottom_range) / 2
@@ -59,7 +66,6 @@ class PowerManager:
                 top_range -= difference
             else:
                 bottom_range -= difference
-            print(top_range, bottom_range, average, mid_point, difference)
 
         value = get_random(bottom_range, top_range)
         self.previous_values.append(value)

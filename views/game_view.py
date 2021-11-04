@@ -10,25 +10,25 @@ from arcade import (
     set_viewport,
     start_render,
 )
+from arcade.color import RED
 from arcade.key import LEFT, RIGHT, UP, A, D, W
 from arcade.physics_engines import PhysicsEnginePlatformer
 from arcade.tilemap import process_layer, read_tmx
 
 from errors import IncorrectNumberOfMarkers
-from label import Label
+from label import EphemeralLabel
+from power.power import PowerManager
 from sprites.player import Player
 from static_values import (
     BOOSTED_PLAYER_JUMP_SPEED,
     GRAVITY,
     HEIGHT,
-    INITIAL_POWER,
     MAX_LEVEL,
     PLAYER_JUMP_SPEED,
     PLAYER_MOVEMENT_SPEED,
     START_LEVEL,
     TILE_HEIGHT,
     TILE_WIDTH,
-    TIME_PER_POWER_DECREASE,
     VIEWPORT_MARGIN,
     WIDTH,
 )
@@ -70,7 +70,9 @@ class GameView(View):
     def __init__(self) -> None:
         super().__init__()
         self.level = START_LEVEL
-        self.power: float = INITIAL_POWER
+        self.power: PowerManager
+        self.not_enough_power_label: EphemeralLabel
+
         self.view_bottom: int
         self.view_left: int
         self.battery_list: SpriteList
@@ -89,8 +91,6 @@ class GameView(View):
         # The list of sprites that sprites will "rise" from
         self.static_moving_up_list: List[MovingUpTileGenerator]
         self.player: Player
-        self.power_label: Label
-        self.time_since_last_power_decrease = 0
         self.spring_board_positions: List[CoordinateTuple] = []
 
         # The bottom x and y position that the player should start at
@@ -132,15 +132,17 @@ class GameView(View):
             if self.player.left > VIEWPORT_MARGIN
             else 0
         )
-        self.power = INITIAL_POWER
-        self.power_label = Label(
-            format_string="Power Level: {value}",
-            initial_value=self.power,
-            x_offset=WIDTH - 50,
-            y_offset=HEIGHT - 35,
-        )
+        self.power = PowerManager(self.battery_list, self.player)
 
-        self.time_since_last_power_decrease = 0
+        self.not_enough_power_label = EphemeralLabel(
+            "You do not have any power. Power is required to pass this level!{value}",
+            "",
+            WIDTH // 2,
+            HEIGHT // 2,
+            3,
+            RED,
+            "center",
+        )
 
         # Perform an effectlivy "shallow copy" of the wall_list
         # so that when appending to contact_list that doesn't also append to the wall_list
@@ -275,11 +277,11 @@ class GameView(View):
         start_render()
         self.moving_up_list.draw()
         self.wall_list.draw()
-        self.battery_list.draw()
+        self.power.draw(self.view_left, self.view_bottom)
         self.death_list.draw()
         self.win_list.draw()
         self.player.draw()
-        self.power_label.draw(self.view_left, self.view_bottom, round(self.power, 1))
+        self.not_enough_power_label.draw(self.view_left, self.view_bottom)
 
     def calculate_jump_speed(self) -> int:
         for pos in self.spring_board_positions:
@@ -316,6 +318,9 @@ class GameView(View):
         self.window.show_view(self.window.game_over_view)
 
     def win(self) -> None:
+        if not self.power.has_power:
+            self.not_enough_power_label.show("")
+            return
         self.level += 1
         if self.level > MAX_LEVEL:
             self.inactive = True
@@ -330,34 +335,6 @@ class GameView(View):
 
     def check_for_collision_with_win(self) -> bool:
         return len(check_for_collision_with_list(self.player, self.win_list)) > 0
-
-    def check_for_collision_with_battery(self) -> None:
-        list = check_for_collision_with_list(self.player, self.battery_list)
-        for battery in list:
-            battery.remove_from_sprite_lists()
-            self.power_label.flash(10)
-            self.power += 1
-
-    def reduce_power(self, delta_time: float) -> None:
-        """Reduces the power based on how much time has passed
-
-        Args:
-            delta_time (float): The time since last update
-        """
-        to_decrease = 1 / TIME_PER_POWER_DECREASE * delta_time
-        self.power -= to_decrease
-        """
-        self.time_since_last_power_decrease += delta_time
-        if self.time_since_last_power_decrease >= TIME_PER_POWER_DECREASE:
-            self.time_since_last_power_decrease -=TIME_PER_POWER_DECREASE
-            self.power -= 1
-        """
-
-    def check_power(self) -> None:
-        """Check to see if the power is too low"""
-        if self.power <= 0:
-            self.death()
-            return
 
     def update_moving_sprites(self, delta_time: float) -> None:
         for moving_up in self.static_moving_up_list:
@@ -389,6 +366,7 @@ class GameView(View):
             # NOTE MAY NEED TO ADD SETTING THE SPRITE'S SPEED HERE
 
     def on_update(self, delta_time: float) -> None:
+        self.not_enough_power_label.update(delta_time)
         self.update_moving_sprites(delta_time)
         self.player.update_animation_with_physics(
             physics_engine=self.physics_engine, delta_time=delta_time
@@ -401,15 +379,10 @@ class GameView(View):
         ):
             self.death()
             return
-        if self.check_for_collision_with_win():
-            self.win()
-            return
 
-        self.check_for_collision_with_battery()
+        self.power.check_collision()
 
-        self.reduce_power(delta_time=delta_time)
-        self.check_power()
-        self.power_label.update(delta_time=delta_time)
+        self.power.update(delta_time=delta_time)
 
         self.physics_engine.update()
 
@@ -453,3 +426,5 @@ class GameView(View):
                 self.view_bottom,
                 HEIGHT + self.view_bottom,
             )
+        if self.check_for_collision_with_win():
+            self.win()

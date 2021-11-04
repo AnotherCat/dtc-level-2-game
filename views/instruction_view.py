@@ -1,12 +1,12 @@
 from typing import TYPE_CHECKING, Callable, NamedTuple, Optional, Union
 
 from arcade import (
+    SpriteList,
     View,
     draw_text,
     set_background_color,
     set_viewport,
     start_render,
-    SpriteList,
 )
 from arcade.color import WHITE
 from arcade.csscolor import DARK_SLATE_BLUE
