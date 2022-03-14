@@ -1,7 +1,8 @@
 # About
 
 This Game is build using [pythonarcade](https://github.com/pythonarcade/arcade)  
-A game for NCEA Level 2 Digital Technology
+A game for NCEA Level 2 Digital Technology  
+Finished in 2021
 
 # Installing
 
